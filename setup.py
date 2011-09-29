@@ -12,6 +12,7 @@ except IOError:
     README = CHANGES = ''
 
 install_requires=[
+    'argparse',
     ]
 
 tests_require= install_requires
@@ -41,5 +42,9 @@ setup(name='octomotron',
       tests_require = tests_require,
       test_suite="octomotron.tests",
       entry_points = """\
+      [console_scripts]
+      octomotron = octomotron.main:main
+      [octomotron.script]
+      stage = octomotron.stage:config_parser
       """
       )
