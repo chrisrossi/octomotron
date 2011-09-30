@@ -51,6 +51,8 @@ setup(name='octomotron',
       octomotron = octomotron.main:main
 
       [octomotron.script]
+      remove = octomotron.remove:config_parser
+      rm = octomotron.remove:config_parser
       serve = octomotron.serve:config_parser
       stage = octomotron.stage:config_parser
       """

@@ -2,6 +2,7 @@ import ConfigParser
 import os
 import pkg_resources
 import json
+import shutil
 import sys
 
 from octomotron.exc import UserError
@@ -119,6 +120,15 @@ class Site(object):
     def startup(self):
         self.build.startup(self)
 
+    def shutdown(self):
+        self.build.shutdown(self)
+
+    def remove_data(self):
+        self.build.remove_data(self)
+
+    def delete(self):
+        shutil.rmtree(self.build_dir)
+
 
 class Build(object):
 
@@ -187,3 +197,9 @@ class Build(object):
 
     def startup(self, site):
         self._build.startup(site)
+
+    def shutdown(self, site):
+        self._build.shutdown(site)
+
+    def remove_data(self, site):
+        self._build.remove_data(site)

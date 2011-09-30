@@ -31,3 +31,20 @@ class AbstractBuild(object):
         Do whatever you need to do to initialize data for this site, including
         creating databases.
         """
+
+    def startup(self, site):
+        """
+        Execute whatever command necessary to start http server for hosted
+        application listening on configured port.
+        """
+
+    def shutdown(self, site):
+        """
+        Execute whatever command necessary to shutdown http server for hosted
+        application.
+        """
+
+    def remove_data(self, site):
+        """
+        Delete the data used by the test instance.
+        """
