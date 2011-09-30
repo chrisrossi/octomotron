@@ -7,6 +7,7 @@ import sys
 
 from octomotron.exc import UserError
 from octomotron.utils import shell
+from octomotron.utils import shell_capture
 from octomotron.utils import unique_int
 
 OCTOMOTRON_CFG = '.octomotron.cfg'
@@ -129,6 +130,32 @@ class Site(object):
     def delete(self):
         shutil.rmtree(self.build_dir)
 
+    def update_sources(self):
+        rebuild_required = False
+        sources = os.path.join(self.build_dir, self.build.sources_dir)
+        for dirname in os.listdir(sources):
+            if dirname.startswith('.'):
+                continue
+            src = os.path.join(sources, dirname)
+            os.chdir(src)
+            output = shell_capture('git pull')
+            rebuild_required = (rebuild_required or
+                                'Already up-to-date' not in output)
+            print output
+        return rebuild_required
+
+    def rebuild_required(self):
+        return self.build.rebuild_required(self)
+
+    def pause(self):
+        self.build.pause(self)
+
+    def resume(self):
+        self.build.resume(self)
+
+    def refresh_data(self):
+        self.build.refresh_data(self)
+
 
 class Build(object):
 
@@ -203,3 +230,15 @@ class Build(object):
 
     def remove_data(self, site):
         self._build.remove_data(site)
+
+    def rebuild_required(self, site):
+        self._build.rebuild_required(site)
+
+    def pause(self, site):
+        self._build.pause(site)
+
+    def resume(self, site):
+        self._build.resume(site)
+
+    def refresh_data(self, site):
+        self._build.refresh_data(site)

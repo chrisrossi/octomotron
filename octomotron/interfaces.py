@@ -48,3 +48,25 @@ class AbstractBuild(object):
         """
         Delete the data used by the test instance.
         """
+
+    def rebuild_required(self, site):
+        """
+        Check if there's some reason, besides git source code changing, which
+        is already detected, that redoing the buildout is required.
+        """
+        return False
+
+    def pause(self, site):
+        """
+        Do whatever needs to be done to pause the site during an update.
+        """
+
+    def resume(self, site):
+        """
+        Do whatever needs to be done to resume site after an update.
+        """
+
+    def refresh_data(self, site):
+        """
+        Do whatever needs to be done to refresh data during an update.
+        """
