@@ -1,6 +1,4 @@
 import os
-import platform
-import sys
 
 from setuptools import setup, find_packages
 
@@ -13,6 +11,10 @@ except IOError:
 
 install_requires=[
     'argparse',
+    'Paste',
+    'PasteDeploy',
+    'PasteScript',
+    'WebOb',
     ]
 
 tests_require= install_requires
@@ -42,9 +44,14 @@ setup(name='octomotron',
       tests_require = tests_require,
       test_suite="octomotron.tests",
       entry_points = """\
+      [paste.app_factory]
+      main = octomotron.serve:make_app
+
       [console_scripts]
       octomotron = octomotron.main:main
+
       [octomotron.script]
+      serve = octomotron.serve:config_parser
       stage = octomotron.stage:config_parser
       """
       )
