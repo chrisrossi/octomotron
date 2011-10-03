@@ -180,6 +180,7 @@ class Build(object):
 
         self.python = config.pop('python', 'python')
         self.sources_dir = config.pop('sources_dir', 'src')
+        self.config = config
 
     def configure(self, other_sites):
         other_config = {}
@@ -232,7 +233,7 @@ class Build(object):
         self._build.remove_data(site)
 
     def rebuild_required(self, site):
-        self._build.rebuild_required(site)
+        return self._build.rebuild_required(site)
 
     def pause(self, site):
         self._build.pause(site)
