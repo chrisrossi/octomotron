@@ -19,6 +19,8 @@ class Application(object):
 
     def __call__(self, environ, start_response):
         environ = environ.copy()
+        if environ['SCRIPT_NAME'] == '/':
+            environ['SCRIPT_NAME'] = ''
         path = environ['PATH_INFO'].lstrip('/')
         if not path:
             return self.index_page(Request(environ))(environ, start_response)
