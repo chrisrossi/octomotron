@@ -26,12 +26,14 @@ def get_build(args):
     return build
 
 
-def shell(cmd):
+def shell(cmd, check_call=True):
     """
     Run a command as though it were being called from a shell script.
     """
     print cmd
-    return subprocess.check_call(cmd, shell=True)
+    if check_call:
+        return subprocess.check_call(cmd, shell=True)
+    return subprocess.call(cmd, shell=True)
 
 
 def shell_capture(cmd):

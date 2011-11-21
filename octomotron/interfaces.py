@@ -21,8 +21,8 @@ class AbstractBuild(object):
 
     def template_resources(self):
         """
-        Return package, path for use by distutils' pkg_resources that points to
-        the root dir of the buildout template files for this build.
+        Return tuple of (package, path) for use by pkg_resources that points
+        to the root dir of the buildout template files for this build.
         """
         return self.__class__.__module__, '__build__'
 
