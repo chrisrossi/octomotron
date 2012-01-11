@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import pkg_resources
 import sys
@@ -8,6 +9,10 @@ from octomotron.exc import UserError
 
 
 OCTOMOTRON_CFG = '.octomotron.cfg'
+
+logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(name)s: %(message)s')
 
 
 def main(argv=sys.argv, out=sys.stdout):

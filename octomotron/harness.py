@@ -32,10 +32,14 @@ class Harness(object):
             config.update(parser.items(section))
             builds[name] = Build(parser, self, name, config)
 
+        bin = os.path.abspath(sys.argv[0])
+        env = os.path.dirname(os.path.dirname(bin))
         if 'builds_dir' not in octomotron:
-            bin = os.path.abspath(sys.argv[0])
-            env = os.path.dirname(os.path.dirname(bin))
             octomotron['builds_dir'] = os.path.join(env, 'builds')
+        if 'var' not in octomotron:
+            octomotron['var'] = os.path.join(env, 'var')
+        if 'pids' not in octomotron:
+            octomotron['pids'] = os.path.join(octomotron['var'], 'pids')
 
         self.__dict__.update(octomotron)
 
@@ -59,6 +63,10 @@ class Harness(object):
 
 class Site(object):
 
+    BUILDING = 'building'
+    UPDATING = 'updating'
+    RUNNING = 'running'
+
     @classmethod
     def load(cls, harness, path):
         serial_file = os.path.join(path, OCTOMOTRON_CFG)
@@ -68,6 +76,7 @@ class Site(object):
         site.harness = harness
         site.build = harness.builds[serial['build']]
         site.config = serial['config']
+        site.state = serial['state']
         site.build_dir = path
         return site
 
@@ -77,11 +86,13 @@ class Site(object):
         self.build = build
         self.config = config
         self.build_dir = os.path.join(self.harness.builds_dir, self.name)
+        self.state = self.BUILDING
         self.save()
 
     def save(self):
         build_dir = self.build_dir
-        serial = {'build': self.build.name, 'config': self.config}
+        serial = {'build': self.build.name, 'config': self.config,
+                  'state': self.state}
         if not os.path.exists(build_dir):
             os.makedirs(build_dir)
         serial_file = os.path.join(build_dir, OCTOMOTRON_CFG)

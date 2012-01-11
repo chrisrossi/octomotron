@@ -32,4 +32,5 @@ def main(args):
     site.buildout()
     site.init_data()
     site.startup()
-
+    site.state = site.RUNNING
+    site.save()
