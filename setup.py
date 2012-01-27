@@ -20,7 +20,7 @@ install_requires=[
 tests_require= install_requires
 
 setup(name='octomotron',
-      version='0.0',
+      version='0.1',
       description=('A tool for rapid deployment of multiple evluation copies '
                    'of a web application based on different git branches.'),
       long_description=README + '\n\n' +  CHANGES,
