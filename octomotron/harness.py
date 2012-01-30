@@ -19,7 +19,7 @@ class Harness(object):
         parser = ConfigParser.ConfigParser()
         parser.read(path)
         defaults = dict(parser.items('DEFAULT'))
-        self.builds = builds = {}
+        self.plans = plans = {}
         octomotron = defaults.copy()
         for section in parser.sections():
             if section == 'octomotron':
@@ -30,7 +30,7 @@ class Harness(object):
             name = section[6:].strip()
             config = defaults.copy()
             config.update(parser.items(section))
-            builds[name] = Build(parser, self, name, config)
+            plans[name] = BuildPlan(parser, self, name, config)
 
         bin = os.path.abspath(sys.argv[0])
         env = os.path.dirname(os.path.dirname(bin))
@@ -52,130 +52,18 @@ class Harness(object):
                 continue
             sites[name] = Site.load(self, os.path.join(self.builds_dir, name))
 
-    def new_site(self, name, build):
+    def new_site(self, name, plan):
         path = os.path.join(self.builds_dir, name)
         if os.path.exists(path):
             raise UserError("Site already exists: %s" % name)
-
-        config = build.configure(self.sites.values())
-        return Site(self, name, build, config)
+        return Site(self, name, plan, self.sites.values())
 
 
-class Site(object):
-
-    BUILDING = 'building'
-    UPDATING = 'updating'
-    RUNNING = 'running'
-
-    @classmethod
-    def load(cls, harness, path):
-        serial_file = os.path.join(path, OCTOMOTRON_CFG)
-        with open(serial_file) as fp:
-            serial = json.load(fp)
-        site = cls.__new__(cls)
-        site.harness = harness
-        site.build = harness.builds[serial['build']]
-        site.config = serial['config']
-        site.state = serial['state']
-        site.build_dir = path
-        return site
-
-    def __init__(self, harness, name, build, config):
-        self.harness = harness
-        self.name = name
-        self.build = build
-        self.config = config
-        self.build_dir = os.path.join(self.harness.builds_dir, self.name)
-        self.state = self.BUILDING
-        self.save()
-
-    def save(self):
-        build_dir = self.build_dir
-        serial = {'build': self.build.name, 'config': self.config,
-                  'state': self.state}
-        if not os.path.exists(build_dir):
-            os.makedirs(build_dir)
-        serial_file = os.path.join(build_dir, OCTOMOTRON_CFG)
-        with open(serial_file, 'w') as fp:
-            json.dump(serial, fp, indent=4)
-
-    def realize(self):
-        self.build.realize(self.build_dir, self.config)
-
-    def bootstrap(self):
-        os.chdir(self.build_dir)
-        shell('virtualenv -p %s --no-site-packages .' % self.build.python)
-        shell('bin/python bootstrap.py')
-
-    def checkout_sources(self, branch, other_branches):
-        src = os.path.join(self.build_dir, self.build.sources_dir)
-        if not os.path.exists(src):
-            os.mkdir(src)
-        os.chdir(src)
-        sources = list(self.build.sources)
-        sources[0]['branch'] = branch
-        for source in sources:
-            name = source['name']
-            source_dir = os.path.join(src, name)
-            if os.path.exists(source_dir):
-                continue
-            branch = other_branches.get(name, source['branch'])
-            shell('git clone --branch %s %s' % (branch, source['url']))
-
-    def buildout(self):
-        os.chdir(self.build_dir)
-        shell('bin/buildout')
-
-    def init_data(self):
-        self.build.init_data(self)
-
-    def startup(self):
-        self.build.startup(self)
-
-    def shutdown(self):
-        self.build.shutdown(self)
-
-    def remove_data(self):
-        self.build.remove_data(self)
-
-    def delete(self):
-        shutil.rmtree(self.build_dir)
-
-    def update_sources(self):
-        rebuild_required = False
-        sources = os.path.join(self.build_dir, self.build.sources_dir)
-        for dirname in os.listdir(sources):
-            if dirname.startswith('.'):
-                continue
-            src = os.path.join(sources, dirname)
-            os.chdir(src)
-            output = shell_capture('git pull')
-            rebuild_required = (rebuild_required or
-                                'Already up-to-date' not in output)
-            print output
-        return rebuild_required
-
-    def rebuild_required(self):
-        return self.build.rebuild_required(self)
-
-    def pause(self):
-        self.build.pause(self)
-
-    def resume(self):
-        self.build.resume(self)
-
-    def refresh_data(self):
-        self.build.refresh_data(self)
-
-
-class Build(object):
+class BuildPlan(object):
 
     def __init__(self, parser, harness, name, config):
         self.harness = harness
         self.name = name
-        ep_dist, ep_name = config.pop('use').split('#')
-        self._build = pkg_resources.load_entry_point(
-            ep_dist, 'octomotron.build', ep_name)(config)
 
         section = config.pop('sources', 'sources')
         self.sources = sources = []
@@ -193,19 +81,67 @@ class Build(object):
         self.sources_dir = config.pop('sources_dir', 'src')
         self.config = config
 
-    def configure(self, other_sites):
+
+class Site(object):
+
+    BUILDING = 'building'
+    UPDATING = 'updating'
+    RUNNING = 'running'
+
+    @classmethod
+    def load(cls, harness, path):
+        serial_file = os.path.join(path, OCTOMOTRON_CFG)
+        with open(serial_file) as fp:
+            serial = json.load(fp)
+        site = cls.__new__(cls)
+        site.harness = harness
+        site.plan = harness.plans[serial['plan']]
+        site.config = serial['config']
+        site.state = serial['state']
+        site.build_dir = path
+        site._init_common()
+        return site
+
+    def __init__(self, harness, name, plan, other_sites):
+        self.harness = harness
+        self.name = name
+        self.plan = plan
+        self._init_common()
+        self.config = self._configure(other_sites)
+        self.build_dir = os.path.join(self.harness.builds_dir, self.name)
+        self.state = self.BUILDING
+        self.save()
+
+    def _configure(self, other_sites):
         other_config = {}
         for site in other_sites:
             for name, value in site.config.items():
                 other_config.setdefault(name, []).append(value)
-        config = self._build.configure(other_config)
+        config = self.build.configure(other_config)
         if 'http_port' not in config:
             config['http_port'] = unique_int(
                 8001, other_config.get('http_port'))
         return config
 
-    def realize(self, build_dir, config):
-        package, path = self._build.template_resources()
+    def _init_common(self):
+        ep_dist, ep_name = self.plan.config['use'].split('#')
+        self.build = pkg_resources.load_entry_point(
+            ep_dist, 'octomotron.build', ep_name)(self)
+
+    def save(self):
+        build_dir = self.build_dir
+        serial = {'plan': self.plan.name, 'config': self.config,
+                  'state': self.state}
+        if not os.path.exists(build_dir):
+            os.makedirs(build_dir)
+        serial_file = os.path.join(build_dir, OCTOMOTRON_CFG)
+        with open(serial_file, 'w') as fp:
+            json.dump(serial, fp, indent=4)
+
+    def realize(self):
+        build_dir = self.build_dir
+        config = self.config
+        package, path = self.build.template_resources()
 
         def visit(src, dst):
             if pkg_resources.resource_isdir(package, src):
@@ -231,26 +167,67 @@ class Build(object):
 
         visit(path, build_dir)
 
-    def init_data(self, site):
-        self._build.init_data(site)
+    def bootstrap(self):
+        os.chdir(self.build_dir)
+        shell('virtualenv -p %s --no-site-packages .' % self.plan.python)
+        shell('bin/python bootstrap.py')
 
-    def startup(self, site):
-        self._build.startup(site)
+    def checkout_sources(self, branch, other_branches):
+        src = os.path.join(self.build_dir, self.plan.sources_dir)
+        if not os.path.exists(src):
+            os.mkdir(src)
+        os.chdir(src)
+        sources = list(self.plan.sources)
+        sources[0]['branch'] = branch
+        for source in sources:
+            name = source['name']
+            source_dir = os.path.join(src, name)
+            if os.path.exists(source_dir):
+                continue
+            branch = other_branches.get(name, source['branch'])
+            shell('git clone --branch %s %s' % (branch, source['url']))
 
-    def shutdown(self, site):
-        self._build.shutdown(site)
+    def buildout(self):
+        os.chdir(self.build_dir)
+        shell('bin/buildout')
 
-    def remove_data(self, site):
-        self._build.remove_data(site)
+    def init_data(self):
+        self.build.init_data()
 
-    def rebuild_required(self, site):
-        return self._build.rebuild_required(site)
+    def startup(self):
+        self.build.startup()
 
-    def pause(self, site):
-        self._build.pause(site)
+    def shutdown(self):
+        self.build.shutdown()
 
-    def resume(self, site):
-        self._build.resume(site)
+    def remove_data(self):
+        self.build.remove_data()
 
-    def refresh_data(self, site):
-        self._build.refresh_data(site)
+    def delete(self):
+        shutil.rmtree(self.build_dir)
+
+    def update_sources(self):
+        rebuild_required = False
+        sources = os.path.join(self.build_dir, self.plan.sources_dir)
+        for dirname in os.listdir(sources):
+            if dirname.startswith('.'):
+                continue
+            src = os.path.join(sources, dirname)
+            os.chdir(src)
+            output = shell_capture('git pull')
+            rebuild_required = (rebuild_required or
+                                'Already up-to-date' not in output)
+            print output
+        return rebuild_required
+
+    def rebuild_required(self):
+        return self.build.rebuild_required()
+
+    def pause(self):
+        self.build.pause()
+
+    def resume(self):
+        self.build.resume()
+
+    def refresh_data(self):
+        self.build.refresh_data()

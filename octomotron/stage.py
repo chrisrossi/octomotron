@@ -1,4 +1,4 @@
-from octomotron.utils import get_build
+from octomotron.utils import get_plan
 
 
 def config_parser(name, subparsers):
@@ -17,8 +17,8 @@ def config_parser(name, subparsers):
 
 def main(args):
     harness = args.harness
-    build = get_build(args)
-    site = harness.new_site(args.name, build)
+    plan = get_plan(args)
+    site = harness.new_site(args.name, plan)
     site.realize()
     site.bootstrap()
     branch = args.branch

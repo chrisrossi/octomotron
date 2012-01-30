@@ -15,19 +15,19 @@ def unique_int(start, other_values):
     return start
 
 
-def get_build(args):
+def get_plan(args):
     name = args.build
-    builds = args.harness.builds
+    plans = args.harness.plans
     if name:
-        build = builds.get(name)
-        if not build:
+        plan = plans.get(name)
+        if not plan:
             raise UserError('No such build: %s' % name)
-    elif len(builds) == 1:
-        build = builds.values()[0]
+    elif len(plans) == 1:
+        plan = plans.values()[0]
     else:
         raise UserError('Must specify build.')
 
-    return build
+    return plan
 
 
 def shell(cmd, check_call=True):

@@ -4,8 +4,8 @@ import abc
 class AbstractBuild(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, site):
+        self.site = site
 
     def configure(self, other_config):
         """
@@ -26,47 +26,47 @@ class AbstractBuild(object):
         """
         return self.__class__.__module__, '__build__'
 
-    def init_data(self, site):
+    def init_data(self):
         """
         Do whatever you need to do to initialize data for this site, including
         creating databases.
         """
 
-    def startup(self, site):
+    def startup(self):
         """
         Execute whatever command necessary to start http server for hosted
         application listening on configured port.
         """
 
-    def shutdown(self, site):
+    def shutdown(self):
         """
         Execute whatever command necessary to shutdown http server for hosted
         application.
         """
 
-    def remove_data(self, site):
+    def remove_data(self):
         """
         Delete the data used by the test instance.
         """
 
-    def rebuild_required(self, site):
+    def rebuild_required(self):
         """
         Check if there's some reason, besides git source code changing, which
         is already detected, that redoing the buildout is required.
         """
         return False
 
-    def pause(self, site):
+    def pause(self):
         """
         Do whatever needs to be done to pause the site during an update.
         """
 
-    def resume(self, site):
+    def resume(self):
         """
         Do whatever needs to be done to resume site after an update.
         """
 
-    def refresh_data(self, site):
+    def refresh_data(self):
         """
         Do whatever needs to be done to refresh data during an update.
         """
