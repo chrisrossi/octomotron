@@ -188,6 +188,11 @@ class Site(object):
             shell('git clone --branch %s %s' % (branch, source['url']))
 
     def buildout(self):
+        buildout_ext = pkg_resources.resource_filename(
+            'octomotron', 'buildout_ext')
+        os.chdir(buildout_ext)
+        python = os.path.join(self.build_dir, 'bin', 'python')
+        shell('%s setup.py develop' % python)
         os.chdir(self.build_dir)
         shell('bin/buildout')
 

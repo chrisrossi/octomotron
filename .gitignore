@@ -1,3 +1,4 @@
 *.pyc
 *.egg-info
 *.swp
+octomotron/buildout_ext/build/
