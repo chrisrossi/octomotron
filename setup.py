@@ -54,7 +54,7 @@ setup(name='octomotron',
       remove = octomotron.remove:config_parser
       rm = octomotron.remove:config_parser
       serve = octomotron.serve:config_parser
-      stage = octomotron.stage:config_parser
+      deploy = octomotron.deploy:config_parser
       update = octomotron.update:config_parser
       """
       )
