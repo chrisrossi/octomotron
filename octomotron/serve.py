@@ -14,10 +14,19 @@ from octomotron.harness import Harness
 class Application(object):
 
     def __init__(self, ini_path):
+        self.ini_path = ini_path
+        self.load()
+
+    def load(self):
+        ini_path = self.ini_path
+        self.mtime = os.path.getmtime(ini_path)
         self.harness = Harness(ini_path)
         self.proxies = {}
 
     def __call__(self, environ, start_response):
+        if os.path.getmtime(self.ini_path) != self.mtime:
+            self.load()
+
         environ = environ.copy()
         if environ['SCRIPT_NAME'] == '/':
             environ['SCRIPT_NAME'] = ''
