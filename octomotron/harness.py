@@ -179,13 +179,21 @@ class Site(object):
         os.chdir(src)
         sources = list(self.plan.sources)
         sources[0]['branch'] = branch
+        checkout = [sources.pop(0)]
         for source in sources:
             name = source['name']
+            branch = other_branches.get(name, None)
+            if branch is None:
+                continue
+            source['branch'] = branch
             source_dir = os.path.join(src, name)
             if os.path.exists(source_dir):
                 continue
-            branch = other_branches.get(name, source['branch'])
-            shell('git clone --branch %s %s' % (branch, source['url']))
+            checkout.append(source)
+
+        for source in checkout:
+            shell('git clone --branch %s %s' % (
+                source['branch'], source['url']))
 
     def buildout(self):
         buildout_ext = pkg_resources.resource_filename(
