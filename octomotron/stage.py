@@ -34,3 +34,4 @@ def main(args):
     site.startup()
     site.state = site.RUNNING
     site.save()
+    harness.reload_server()

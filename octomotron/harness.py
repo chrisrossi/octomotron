@@ -15,9 +15,10 @@ OCTOMOTRON_CFG = '.octomotron.cfg'
 
 class Harness(object):
 
-    def __init__(self, path):
+    def __init__(self, ini_path):
+        self.ini_path = ini_path
         parser = ConfigParser.ConfigParser()
-        parser.read(path)
+        parser.read(ini_path)
         defaults = dict(parser.items('DEFAULT'))
         self.plans = plans = {}
         octomotron = defaults.copy()
@@ -57,6 +58,9 @@ class Harness(object):
         if os.path.exists(path):
             raise UserError("Site already exists: %s" % name)
         return Site(self, name, plan, self.sites.values())
+
+    def reload_server(self):
+        os.utime(self.ini_path, None)
 
 
 class BuildPlan(object):

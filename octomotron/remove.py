@@ -14,3 +14,4 @@ def main(args):
     site.shutdown()
     site.remove_data()
     site.delete()
+    harness.reload_server()
