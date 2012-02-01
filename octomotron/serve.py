@@ -41,12 +41,13 @@ class Application(object):
         site_name = path.pop(0)
         environ['PATH_INFO'] = '/' + '/'.join(path)
 
+        site = self.harness.sites.get(site_name)
+        if not site or not site.state == 'running':
+            return HTTPNotFound()(environ, start_response)
+
         proxies = self.proxies
         proxy = proxies.get(site_name)
         if not proxy:
-            site = self.harness.sites.get(site_name)
-            if not site:
-                return HTTPNotFound()(environ, start_response)
             url = 'http://localhost:%d/' % site.config['http_port']
             proxies[site_name] = proxy = Proxy(url)
 

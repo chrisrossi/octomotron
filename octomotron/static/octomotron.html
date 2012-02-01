@@ -9,11 +9,13 @@
             {{#each sites}}
             <div class="site">
                 <h2>{{title}} <span class="status">({{status}})</span></h2>
+                {{#if pages}}
                 <ul class="site-pages">
                     {{#each pages}}
                     <li><a href="{{href}}">{{title}}</a></li>
                     {{/each}}
                 </ul>
+                {{/if}}
             </div>
             {{/each}}
         </script>

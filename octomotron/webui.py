@@ -34,13 +34,17 @@ class WebUI(object):
             return response
 
     def get_sites(self, request):
-        return JSONResponse({'sites': [
-            {'title': site.name,
-             'status': site.state,
-             'pages': [
-                 {'href': '/%s%s' % (site.name, page['href']),
-                  'title': page['title']} for page in site.pages()]
-            } for site in self.harness.sites.values()]})
+        sites = []
+        for site in self.harness.sites.values():
+            if site.state == 'running':
+                pages = [{'href': '/%s%s' % (site.name, page['href']),
+                          'title': page['title']} for page in site.pages()]
+            else:
+                pages = []
+            sites.append({'title': site.name, 'status': site.state,
+                          'pages': pages})
+
+        return JSONResponse({'sites': sites})
 
 
 class JSONResponse(Response):
