@@ -12,7 +12,8 @@ def config_parser(name, subparsers):
 
 @only_one('update')
 def main(args):
-    sites = args.harness.sites
+    harness = args.harness
+    sites = harness.sites
     for site_name in sorted(sites.keys()):
         site = sites[site_name]
         if site.state != site.RUNNING:
@@ -25,11 +26,13 @@ def main(args):
             log.info("Rebuilding %s", site_name)
             site.state = site.UPDATING
             site.save()
+            harness.reload_server()
             site.pause()
             site.buildout()
             site.refresh_data()
             site.resume()
             site.state = site.RUNNING
             site.save()
+            harness.reload_server()
         else:
             log.info("%s is up to date", site_name)

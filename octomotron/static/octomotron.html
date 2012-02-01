@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Octomotron</title>
+        <script src="/OCTOMOTRON/jquery-1.7.1.min.js"></script>
+        <script src="/OCTOMOTRON/handlebars-1.0.0.beta.6.js"></script>
+        <script src="/OCTOMOTRON/octomotron.js"></script>
+        <script id="sites" type="text/x-handlebars-template">
+            {{#each sites}}
+            <div class="site">
+                <h2>{{title}} <span class="status">({{status}})</span></h2>
+                <ul class="site-pages">
+                    {{#each pages}}
+                    <li><a href="{{href}}">{{title}}</a></li>
+                    {{/each}}
+                </ul>
+            </div>
+            {{/each}}
+        </script>
+    </head>
+    <body>
+        <div id="sites-section">
+            <h1>Sites</h1>
+            <div id="sites">
+            </div>
+        </div>
+    </body>
+</html>

@@ -9,6 +9,7 @@ from webob.request import Request
 from webob.response import Response
 
 from octomotron.harness import Harness
+from octomotron.webui import WebUI
 
 
 class Application(object):
@@ -21,19 +22,21 @@ class Application(object):
         ini_path = self.ini_path
         self.mtime = os.path.getmtime(ini_path)
         self.harness = Harness(ini_path)
+        self.webui = WebUI(self.harness)
         self.proxies = {}
 
     def __call__(self, environ, start_response):
         if os.path.getmtime(self.ini_path) != self.mtime:
             self.load()
 
+        response = self.webui(Request(environ))
+        if response is not None:
+            return response(environ, start_response)
+
         environ = environ.copy()
         if environ['SCRIPT_NAME'] == '/':
             environ['SCRIPT_NAME'] = ''
         path = environ['PATH_INFO'].lstrip('/')
-        if not path:
-            return self.index_page(Request(environ))(environ, start_response)
-
         path = path.split('/')
         site_name = path.pop(0)
         environ['PATH_INFO'] = '/' + '/'.join(path)

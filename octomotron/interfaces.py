@@ -70,3 +70,11 @@ class AbstractBuild(object):
         """
         Do whatever needs to be done to refresh data during an update.
         """
+
+    def pages(self):
+        """
+        Provide a list of site-relative urls to pages in the site that should
+        be linked to from the Octomotron web UI.
+        """
+        return [{'href': '/', 'title': 'home'}]
+

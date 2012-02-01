@@ -99,6 +99,7 @@ class Site(object):
             serial = json.load(fp)
         site = cls.__new__(cls)
         site.harness = harness
+        site.name = serial['name']
         site.plan = harness.plans[serial['plan']]
         site.config = serial['config']
         site.state = serial['state']
@@ -135,7 +136,7 @@ class Site(object):
     def save(self):
         build_dir = self.build_dir
         serial = {'plan': self.plan.name, 'config': self.config,
-                  'state': self.state}
+                  'state': self.state, 'name': self.name}
         if not os.path.exists(build_dir):
             os.makedirs(build_dir)
         serial_file = os.path.join(build_dir, OCTOMOTRON_CFG)
@@ -248,3 +249,6 @@ class Site(object):
 
     def refresh_data(self):
         self.build.refresh_data()
+
+    def pages(self):
+        return self.build.pages()

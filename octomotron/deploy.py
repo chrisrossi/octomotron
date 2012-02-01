@@ -19,6 +19,7 @@ def main(args):
     harness = args.harness
     plan = get_plan(args)
     site = harness.new_site(args.name, plan)
+    harness.reload_server()
     site.realize()
     site.bootstrap()
     branch = args.branch
