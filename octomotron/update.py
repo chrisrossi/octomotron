@@ -24,7 +24,8 @@ def main(args):
         if merged:
             log.info("%s merged.  Removing...", site_name)
             args.name = site_name
-            return remove(args)
+            remove(args)
+            continue
 
         if not rebuild_required:
             rebuild_required = site.rebuild_required()
