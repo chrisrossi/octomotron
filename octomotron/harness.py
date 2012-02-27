@@ -1,7 +1,8 @@
 import ConfigParser
+import json
+import logging
 import os
 import pkg_resources
-import json
 import shutil
 import sys
 
@@ -11,6 +12,9 @@ from octomotron.utils import shell_capture
 from octomotron.utils import unique_int
 
 OCTOMOTRON_CFG = '.octomotron.cfg'
+
+
+log = logging.getLogger(__name__)
 
 
 class Harness(object):
@@ -226,6 +230,7 @@ class Site(object):
         shutil.rmtree(self.build_dir)
 
     def update_sources(self):
+        all_merged = True
         rebuild_required = False
         sources = os.path.join(self.build_dir, self.plan.sources_dir)
         for dirname in os.listdir(sources):
@@ -236,8 +241,18 @@ class Site(object):
             output = shell_capture('git pull')
             rebuild_required = (rebuild_required or
                                 'Already up-to-date' not in output)
-            print output
-        return rebuild_required
+            log.info(output)
+            if all_merged:
+                merged = False
+                output = shell_capture('git branch --merged origin/master')
+                for line in output.split('\n'):
+                    if line.startswith('*'):
+                        if line.strip() != '* master':
+                            merged = True
+                        break
+                all_merged = merged
+
+        return rebuild_required, all_merged
 
     def rebuild_required(self):
         return self.build.rebuild_required()

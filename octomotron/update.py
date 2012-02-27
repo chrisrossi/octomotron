@@ -1,4 +1,5 @@
 import logging
+from octomotron.remove import main as remove
 from octomotron.utils import only_one
 
 log = logging.getLogger(__name__)
@@ -19,7 +20,12 @@ def main(args):
         if site.state != site.RUNNING:
             log.warn("Skipping %s (%s)", site_name, site.state)
             continue
-        rebuild_required = site.update_sources()
+        rebuild_required, merged = site.update_sources()
+        if merged:
+            log.info("%s merged.  Removing...", site_name)
+            args.name = site_name
+            return remove(args)
+
         if not rebuild_required:
             rebuild_required = site.rebuild_required()
         if rebuild_required:
