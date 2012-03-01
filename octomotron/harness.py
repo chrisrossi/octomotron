@@ -21,7 +21,8 @@ class Harness(object):
 
     def __init__(self, ini_path):
         self.ini_path = ini_path
-        parser = ConfigParser.ConfigParser()
+        here = os.path.dirname(os.path.abspath(ini_path))
+        parser = ConfigParser.ConfigParser({'here' :here})
         parser.read(ini_path)
         defaults = dict(parser.items('DEFAULT'))
         self.plans = plans = {}
@@ -76,6 +77,8 @@ class BuildPlan(object):
         section = config.pop('sources', 'sources')
         self.sources = sources = []
         for name, source in parser.items(section):
+            if name == 'here':
+                continue
             parts = source.split()
             if len(parts) == 1:
                 url, branch = source, 'master'
