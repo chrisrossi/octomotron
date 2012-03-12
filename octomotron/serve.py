@@ -6,7 +6,6 @@ from paste.script.serve import ServeCommand
 
 from webob.exc import HTTPNotFound
 from webob.request import Request
-from webob.response import Response
 
 from octomotron.harness import Harness
 from octomotron.webui import WebUI
@@ -60,18 +59,6 @@ class Application(object):
         vhm_host = '%s://%s/%s' % (scheme, environ['HTTP_HOST'], site_name)
         environ['HTTP_X_VHM_HOST'] = vhm_host
         return proxy(environ, start_response)
-
-    def index_page(self, request):
-        html = ["<html><head><title>Octomotron!</title></head>\n",
-                "<body>\n",
-                "  <h1>Sites</h1>\n",
-                "  <ul>\n"]
-        for site in sorted(self.harness.sites.keys()):
-            html.append('    <li><a href="%s">%s</a></li>\n' %
-                        (request.url + site, site))
-        html.append("  </ul>\n</body>\n</html>")
-        html = ''.join(html)
-        return Response(html, content_type='text/html')
 
 
 def make_app(global_config, ini_path):
