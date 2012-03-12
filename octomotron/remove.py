@@ -10,7 +10,7 @@ def main(args):
     harness = args.harness
     site = harness.sites.get(args.name)
     if not site:
-        args.parser.error("No such site: %s" % site)
+        args.parser.error("No such site: %s" % args.name)
     site.shutdown()
     site.remove_data()
     site.delete()

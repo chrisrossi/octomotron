@@ -24,56 +24,10 @@ class Harness(object):
         here = os.path.dirname(os.path.abspath(ini_path))
         parser = ConfigParser.ConfigParser({'here' :here})
         parser.read(ini_path)
-        defaults = dict(parser.items('DEFAULT'))
-        self.plans = plans = {}
-        octomotron = defaults.copy()
-        for section in parser.sections():
-            if section == 'octomotron':
-                octomotron.update(parser.items(section))
-                continue
-            elif not section.startswith('build:'):
-                continue
-            name = section[6:].strip()
-            config = defaults.copy()
-            config.update(parser.items(section))
-            plans[name] = BuildPlan(parser, self, name, config)
+        config = dict(parser.items('DEFAULT'))
+        config.update(parser.items('build'))
 
-        bin = os.path.abspath(sys.argv[0])
-        env = os.path.dirname(os.path.dirname(bin))
-        if 'builds_dir' not in octomotron:
-            octomotron['builds_dir'] = os.path.join(env, 'builds')
-        if 'var' not in octomotron:
-            octomotron['var'] = os.path.join(env, 'var')
-        if 'pids' not in octomotron:
-            octomotron['pids'] = os.path.join(octomotron['var'], 'pids')
-
-        self.__dict__.update(octomotron)
-
-        if not os.path.exists(self.builds_dir):
-            os.makedirs(self.builds_dir)
-
-        self.sites = sites = {}
-        for name in os.listdir(self.builds_dir):
-            if name.startswith('.'):
-                continue
-            sites[name] = Site.load(self, os.path.join(self.builds_dir, name))
-
-    def new_site(self, name, plan):
-        path = os.path.join(self.builds_dir, name)
-        if os.path.exists(path):
-            raise UserError("Site already exists: %s" % name)
-        return Site(self, name, plan, self.sites.values())
-
-    def reload_server(self):
-        os.utime(self.ini_path, None)
-
-
-class BuildPlan(object):
-
-    def __init__(self, parser, harness, name, config):
-        self.harness = harness
-        self.name = name
-
+        # Populate sources
         section = config.pop('sources', 'sources')
         self.sources = sources = []
         for name, source in parser.items(section):
@@ -88,9 +42,33 @@ class BuildPlan(object):
                 raise UserError('Bad sources line: %s' % source)
             sources.append({'name': name, 'url': url, 'branch': branch})
 
+        bin = os.path.abspath(sys.argv[0])
+        env = os.path.dirname(os.path.dirname(bin))
+        self.builds_dir = config.pop('builds_dir', os.path.join(env, 'builds'))
+        self.var = config.pop('var', os.path.join(env, 'var'))
+        self.pids = config.pop('pids', os.path.join(self.var, 'pids'))
         self.python = config.pop('python', 'python')
         self.sources_dir = config.pop('sources_dir', 'src')
+        self.build = config.pop('use')
         self.config = config
+
+        if not os.path.exists(self.builds_dir):
+            os.makedirs(self.builds_dir)
+
+        self.sites = sites = {}
+        for name in os.listdir(self.builds_dir):
+            if name.startswith('.'):
+                continue
+            sites[name] = Site.load(self, os.path.join(self.builds_dir, name))
+
+    def new_site(self, name):
+        path = os.path.join(self.builds_dir, name)
+        if os.path.exists(path):
+            raise UserError("Site already exists: %s" % name)
+        return Site(self, name, self.sites.values())
+
+    def reload_server(self):
+        os.utime(self.ini_path, None)
 
 
 class Site(object):
@@ -107,17 +85,15 @@ class Site(object):
         site = cls.__new__(cls)
         site.harness = harness
         site.name = serial['name']
-        site.plan = harness.plans[serial['plan']]
         site.config = serial['config']
         site.state = serial['state']
         site.build_dir = path
         site._init_common()
         return site
 
-    def __init__(self, harness, name, plan, other_sites):
+    def __init__(self, harness, name, other_sites):
         self.harness = harness
         self.name = name
-        self.plan = plan
         self._init_common()
         self.config = self._configure(other_sites)
         self.build_dir = os.path.join(self.harness.builds_dir, self.name)
@@ -136,13 +112,13 @@ class Site(object):
         return config
 
     def _init_common(self):
-        ep_dist, ep_name = self.plan.config['use'].split('#')
+        ep_dist, ep_name = self.harness.build.split('#')
         self.build = pkg_resources.load_entry_point(
             ep_dist, 'octomotron.build', ep_name)(self)
 
     def save(self):
         build_dir = self.build_dir
-        serial = {'plan': self.plan.name, 'config': self.config,
+        serial = {'config': self.config,
                   'state': self.state, 'name': self.name}
         if not os.path.exists(build_dir):
             os.makedirs(build_dir)
@@ -181,7 +157,7 @@ class Site(object):
 
     def bootstrap(self):
         os.chdir(self.build_dir)
-        shell('virtualenv -p %s --no-site-packages .' % self.plan.python)
+        shell('virtualenv -p %s --no-site-packages .' % self.harness.python)
         shell('bin/python bootstrap.py')
 
         buildout_ext = pkg_resources.resource_filename(
@@ -191,11 +167,11 @@ class Site(object):
         shell('%s setup.py develop' % python)
 
     def checkout_sources(self, branch, other_branches):
-        src = os.path.join(self.build_dir, self.plan.sources_dir)
+        src = os.path.join(self.build_dir, self.harness.sources_dir)
         if not os.path.exists(src):
             os.mkdir(src)
         os.chdir(src)
-        sources = list(self.plan.sources)
+        sources = list(self.harness.sources)
         sources[0]['branch'] = branch
         checkout = [sources.pop(0)]
         for source in sources:
@@ -235,7 +211,7 @@ class Site(object):
     def update_sources(self):
         all_merged = True
         rebuild_required = False
-        sources = os.path.join(self.build_dir, self.plan.sources_dir)
+        sources = os.path.join(self.build_dir, self.harness.sources_dir)
         for dirname in os.listdir(sources):
             if dirname.startswith('.'):
                 continue

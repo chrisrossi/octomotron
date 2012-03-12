@@ -1,10 +1,6 @@
-from octomotron.utils import get_plan
-
 
 def config_parser(name, subparsers):
     parser = subparsers.add_parser(name, help='Create a new staging instance.')
-    parser.add_argument('-B', '--build', default=None,
-        help='Which build to use. Optional if only one build is configured.')
     parser.add_argument('-R', '--branch', default=None,
         help='Which branch to check out for main development package. Default '
         'is same as name of staging site.')
@@ -17,8 +13,7 @@ def config_parser(name, subparsers):
 
 def main(args):
     harness = args.harness
-    plan = get_plan(args)
-    site = harness.new_site(args.name, plan)
+    site = harness.new_site(args.name)
     harness.reload_server()
     site.realize()
     site.bootstrap()
