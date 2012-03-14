@@ -1,6 +1,5 @@
 import argparse
 import logging
-import os
 import pkg_resources
 import sys
 
@@ -31,31 +30,10 @@ def main(argv=sys.argv, out=sys.stdout):
         ep.load()(ep.name, subparsers)
 
     args = parser.parse_args(argv[1:])
-    if args.config is None:
-        args.config = get_default_config()
     try:
         args.func(args)
     except UserError, e:
         args.parser.error(str(e))
 
 
-def get_default_config():
-    config = 'octomotron.ini'
 
-    if os.path.exists(config):
-        return os.path.abspath(config)
-
-    bin = os.path.abspath(sys.argv[0])
-    env = os.path.dirname(os.path.dirname(bin))
-    config = os.path.join(env, 'etc', 'octomotron.ini')
-
-    if os.path.exists(config):
-        return config
-
-    config = os.path.join('etc', 'octomotron.ini')
-
-    if os.path.exists(config):
-        return os.path.abspath(config)
-
-    raise ValueError("Unable to locate config.  Use --config to specify "
-                     "path to octomotron.ini")

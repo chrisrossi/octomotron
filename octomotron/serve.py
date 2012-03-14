@@ -8,6 +8,7 @@ from webob.exc import HTTPNotFound
 from webob.request import Request
 
 from octomotron.harness import Harness
+from octomotron.utils import get_default_config
 from octomotron.webui import WebUI
 
 
@@ -72,6 +73,8 @@ def config_parser(name, subparsers):
 
 
 def serve(args):
+    if args.config is None:
+        args.config = get_default_config()
     os.environ['PASTE_CONFIG_FILE'] = args.config
 
     cmd = ServeCommand('jove serve')

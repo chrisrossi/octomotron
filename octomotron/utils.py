@@ -17,6 +17,8 @@ def unique_int(start, other_values):
 def get_harness(args):
     # avoid circular import
     from octomotron.harness import Harness
+    if args.config is None:
+        args.config = get_default_config()
     return Harness(args.config)
 
 
@@ -108,3 +110,25 @@ def only_one(name):
 
         return wrapper
     return decorator
+
+
+def get_default_config():
+    config = 'octomotron.ini'
+
+    if os.path.exists(config):
+        return os.path.abspath(config)
+
+    bin = os.path.abspath(sys.argv[0])
+    env = os.path.dirname(os.path.dirname(bin))
+    config = os.path.join(env, 'etc', 'octomotron.ini')
+
+    if os.path.exists(config):
+        return config
+
+    config = os.path.join('etc', 'octomotron.ini')
+
+    if os.path.exists(config):
+        return os.path.abspath(config)
+
+    raise ValueError("Unable to locate config.  Use --config to specify "
+                     "path to octomotron.ini")
