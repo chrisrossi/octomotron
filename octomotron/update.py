@@ -1,5 +1,6 @@
 import logging
 from octomotron.remove import main as remove
+from octomotron.utils import get_harness
 from octomotron.utils import only_one
 
 log = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ def config_parser(name, subparsers):
 
 @only_one('update')
 def main(args):
-    harness = args.harness
+    harness = get_harness(args)
     sites = harness.sites
     for site_name in sorted(sites.keys()):
         site = sites[site_name]
@@ -35,7 +36,7 @@ def main(args):
             site.save()
             harness.reload_server()
             site.pause()
-            site.buildout()
+            site.refresh()
             site.refresh_data()
             site.resume()
             site.state = site.RUNNING

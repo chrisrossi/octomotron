@@ -1,0 +1,5 @@
+greenlet
+gevent
+gunicorn
+repoze.vhm
+-e git+git@github.com:chrisrossi/octomotron.git#egg=octomotron

@@ -1,0 +1,14 @@
+[app:surebro]
+use = egg:surebro#main
+var = %%(here)s/../var
+zodbconn.uri = zeo://localhost:%(zeo_port)s/?blob_dir=%%(var)s/blobs&shared_blob_dir=true
+
+[pipeline:main]
+pipeline =
+    egg:repoze.vhm#vhm_xheaders
+    surebro
+
+[server:main]
+use = egg:Paste#http
+host = 0.0.0.0
+port = %(http_port)s

@@ -3,7 +3,6 @@ import os
 import subprocess
 import sys
 
-from octomotron.exc import UserError
 
 log = logging.getLogger(__name__)
 
@@ -15,19 +14,10 @@ def unique_int(start, other_values):
     return start
 
 
-def get_plan(args):
-    name = args.build
-    plans = args.harness.plans
-    if name:
-        plan = plans.get(name)
-        if not plan:
-            raise UserError('No such build: %s' % name)
-    elif len(plans) == 1:
-        plan = plans.values()[0]
-    else:
-        raise UserError('Must specify build.')
-
-    return plan
+def get_harness(args):
+    # avoid circular import
+    from octomotron.harness import Harness
+    return Harness(args.config)
 
 
 def shell(cmd, check_call=True):
@@ -118,4 +108,3 @@ def only_one(name):
 
         return wrapper
     return decorator
-

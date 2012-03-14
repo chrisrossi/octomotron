@@ -4,7 +4,6 @@ import os
 import pkg_resources
 import sys
 
-from octomotron.harness import Harness
 from octomotron.exc import UserError
 
 
@@ -34,8 +33,6 @@ def main(argv=sys.argv, out=sys.stdout):
     args = parser.parse_args(argv[1:])
     if args.config is None:
         args.config = get_default_config()
-    args.harness = Harness(args.config)
-
     try:
         args.func(args)
     except UserError, e:

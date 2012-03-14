@@ -56,5 +56,6 @@ setup(name='octomotron',
       serve = octomotron.serve:config_parser
       deploy = octomotron.deploy:config_parser
       update = octomotron.update:config_parser
+      example = octomotron.example:config_parser
       """
       )

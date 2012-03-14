@@ -1,4 +1,0 @@
-
-
-class UserError(Exception):
-    pass

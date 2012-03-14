@@ -155,17 +155,6 @@ class Site(object):
 
         visit(path, build_dir)
 
-    def bootstrap(self):
-        os.chdir(self.build_dir)
-        shell('virtualenv -p %s --no-site-packages .' % self.harness.python)
-        shell('bin/python bootstrap.py')
-
-        buildout_ext = pkg_resources.resource_filename(
-            'octomotron', 'buildout_ext')
-        os.chdir(buildout_ext)
-        python = os.path.join(self.build_dir, 'bin', 'python')
-        shell('%s setup.py develop' % python)
-
     def checkout_sources(self, branch, other_branches):
         src = os.path.join(self.build_dir, self.harness.sources_dir)
         if not os.path.exists(src):
@@ -189,9 +178,11 @@ class Site(object):
             shell('git clone --branch %s %s' % (
                 source['branch'], source['url']))
 
-    def buildout(self):
-        os.chdir(self.build_dir)
-        shell('bin/buildout')
+    def setup(self):
+        self.build.setup()
+
+    def refresh(self):
+        self.build.refresh()
 
     def init_data(self):
         self.build.init_data()

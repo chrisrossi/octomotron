@@ -1,3 +1,5 @@
+from octomotron.utils import get_harness
+
 
 def config_parser(name, subparsers):
     parser = subparsers.add_parser(name, help='Create a new staging instance.')
@@ -12,11 +14,6 @@ def config_parser(name, subparsers):
 
 
 def main(args):
-    harness = args.harness
-    site = harness.new_site(args.name)
-    harness.reload_server()
-    site.realize()
-    site.bootstrap()
     branch = args.branch
     if not branch:
         branch = args.name
@@ -24,8 +21,13 @@ def main(args):
         branches = dict([b.split('=') for b in args.branches])
     else:
         branches = {}
+
+    harness = get_harness(args)
+    site = harness.new_site(args.name)
+    harness.reload_server()
+    site.realize()
     site.checkout_sources(branch, branches)
-    site.buildout()
+    site.setup()
     site.init_data()
     site.startup()
     site.state = site.RUNNING

@@ -1,4 +1,8 @@
 import abc
+import os
+import pkg_resources
+
+from octomotron.utils import shell
 
 
 class AbstractBuild(object):
@@ -25,6 +29,17 @@ class AbstractBuild(object):
         to the root dir of the buildout template files for this build.
         """
         return self.__class__.__module__, '__build__'
+
+    def setup(self):
+        """
+        Perform setup needed for your application, eg run bootstrap your build,
+        run pip install, etc...
+        """
+
+    def refesh(self):
+        """
+        Perform any steps need after updating code.
+        """
 
     def init_data(self):
         """
@@ -78,3 +93,40 @@ class AbstractBuild(object):
         """
         return [{'href': '/', 'title': 'home'}]
 
+
+class VirtualenvBuild(AbstractBuild):
+
+    def setup(self):
+        site = self.site
+        os.chdir(site.build_dir)
+        shell('virtualenv -p %s --no-site-packages .' % site.harness.python)
+        if os.path.exists('requirements.txt'):
+            shell('bin/pip install -r requirements.txt')
+        src = os.path.abspath('src')
+        for dirname in os.listdir(src):
+            srcdir = os.path.join(src, dirname)
+            setup_py = os.path.join(srcdir, 'setup.py')
+            if os.path.exists(setup_py):
+                os.chdir(srcdir)
+                shell('../../bin/python setup.py develop')
+
+
+class BuildoutBuild(AbstractBuild):
+
+    def setup(self):
+        site = self.site
+        os.chdir(site.build_dir)
+        shell('virtualenv -p %s --no-site-packages .' % site.harness.python)
+        shell('bin/python bootstrap.py')
+
+        buildout_ext = pkg_resources.resource_filename(
+            'octomotron', 'buildout_ext')
+        os.chdir(buildout_ext)
+        python = os.path.join(site.build_dir, 'bin', 'python')
+        shell('%s setup.py develop' % python)
+        shell('bin/buildout')
+
+    def refresh(self):
+        site = self.site
+        os.chdir(site.build_dir)
+        shell('bin/buildout')

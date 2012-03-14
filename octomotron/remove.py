@@ -1,3 +1,4 @@
+from octomotron.utils import get_harness
 
 
 def config_parser(name, subparsers):
@@ -7,7 +8,7 @@ def config_parser(name, subparsers):
 
 
 def main(args):
-    harness = args.harness
+    harness = get_harness(args)
     site = harness.sites.get(args.name)
     if not site:
         args.parser.error("No such site: %s" % args.name)

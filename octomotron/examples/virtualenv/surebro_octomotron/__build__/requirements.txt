@@ -1,0 +1,8 @@
+greenlet
+gevent
+gunicorn
+supervisor
+Paste
+PasteDeploy
+PasteScript
+repoze.vhm

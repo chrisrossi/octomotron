@@ -1,5 +1,7 @@
 *.pyc
 *.egg-info
 *.swp
-octomotron/buildout_ext/build/
+.ropeproject
 build
+octomotron/buildout_ext/build/
+venv
