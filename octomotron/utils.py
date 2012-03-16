@@ -15,11 +15,13 @@ def unique_int(start, other_values):
 
 
 def get_harness(args):
-    # avoid circular import
-    from octomotron.harness import Harness
-    if args.config is None:
-        args.config = get_default_config()
-    return Harness(args.config)
+    if 'harness' not in args:
+        # avoid circular import
+        from octomotron.harness import Harness
+        if args.config is None:
+            args.config = get_default_config()
+        args.harness = Harness(args.config)
+    return args.harness
 
 
 def shell(cmd, check_call=True):
@@ -80,7 +82,8 @@ def only_one(name):
     """
     def decorator(f):
         def wrapper(args):
-            pids = args.harness.pids
+            harness = get_harness(args)
+            pids = harness.pids
             if not os.path.exists(pids):
                 os.makedirs(pids)
             pidfile = os.path.join(pids, name)
