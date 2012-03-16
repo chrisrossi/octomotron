@@ -124,6 +124,8 @@ class BuildoutBuild(AbstractBuild):
         os.chdir(buildout_ext)
         python = os.path.join(site.build_dir, 'bin', 'python')
         shell('%s setup.py develop' % python)
+
+        os.chdir(site.build_dir)
         shell('bin/buildout')
 
     def refresh(self):

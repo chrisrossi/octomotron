@@ -1,0 +1,13 @@
+%%define INSTANCE .
+
+<zeo>
+  address %(zeo_port)s
+  pid-filename $INSTANCE/var/ZEO.pid
+</zeo>
+
+<blobstorage 1>
+  <filestorage>
+    path $INSTANCE/var/surebro.db
+  </filestorage>
+  blob-dir $INSTANCE/var/blobs
+</blobstorage>
