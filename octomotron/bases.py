@@ -36,7 +36,7 @@ class AbstractBuild(object):
         run pip install, etc...
         """
 
-    def refesh(self):
+    def refresh(self):
         """
         Perform any steps need after updating code.
         """
