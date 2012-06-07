@@ -200,7 +200,7 @@ class Site(object):
         shutil.rmtree(self.build_dir)
 
     def update_sources(self):
-        all_merged = True
+        all_merged = self.name != 'master'
         rebuild_required = False
         sources = os.path.join(self.build_dir, self.harness.sources_dir)
         for dirname in os.listdir(sources):
@@ -217,8 +217,6 @@ class Site(object):
                 output = shell_capture('git branch --merged origin/master')
                 for line in output.split('\n'):
                     if line.startswith('*'):
-                        if line.strip() != '* master':
-                            merged = True
                         break
                 all_merged = merged
 
