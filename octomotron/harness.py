@@ -217,6 +217,7 @@ class Site(object):
                 output = shell_capture('git branch --merged origin/master')
                 for line in output.split('\n'):
                     if line.startswith('*'):
+                        merged = True
                         break
                 all_merged = merged
 
