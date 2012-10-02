@@ -30,6 +30,7 @@ class Harness(object):
         # Populate sources
         section = config.pop('sources', 'sources')
         self.sources = sources = []
+        self.always_checkout = config.pop('always_checkout', '').split()
         for name, source in parser.items(section):
             if name == 'here':
                 continue
@@ -41,6 +42,10 @@ class Harness(object):
             else:
                 raise UserError('Bad sources line: %s' % source)
             sources.append({'name': name, 'url': url, 'branch': branch})
+
+        first = sources[0]['name']
+        if first not in self.always_checkout:
+            self.always_checkout.append(first)
 
         bin = os.path.abspath(sys.argv[0])
         env = os.path.dirname(os.path.dirname(bin))
@@ -160,21 +165,17 @@ class Site(object):
         if not os.path.exists(src):
             os.mkdir(src)
         os.chdir(src)
-        sources = list(self.harness.sources)
-        sources[0]['branch'] = branch
-        checkout = [sources.pop(0)]
-        for source in sources:
+        for source in self.harness.sources:
             name = source['name']
-            branch = other_branches.get(name, None)
+            default = 'master' if name in self.harness.always_checkout else None
+            branch = other_branches.get(name, default)
             if branch is None:
                 continue
             source['branch'] = branch
             source_dir = os.path.join(src, name)
             if os.path.exists(source_dir):
                 continue
-            checkout.append(source)
 
-        for source in checkout:
             shell('git clone --branch %s %s' % (
                 source['branch'], source['url']))
 
