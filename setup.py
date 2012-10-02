@@ -1,4 +1,5 @@
 import os
+import sys
 
 from setuptools import setup, find_packages
 
@@ -10,12 +11,14 @@ except IOError:
     README = CHANGES = ''
 
 install_requires=[
-    'argparse',
     'Paste',
     'PasteDeploy',
     'PasteScript',
     'WebOb',
     ]
+
+if sys.version < '2.7':
+    install_requires.append('argparse')
 
 tests_require= install_requires
 
