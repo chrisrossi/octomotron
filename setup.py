@@ -20,10 +20,14 @@ install_requires=[
 if sys.version < '2.7':
     install_requires.append('argparse')
 
-tests_require= install_requires
+tests_require = install_requires + ['mock']
+if sys.version < '2.7':
+    tests_require.append('unittest2')
+
+testing_extras = tests_require + ['nose', 'coverage']
 
 setup(name='octomotron',
-      version='0.1',
+      version='0.2dev',
       description=('A tool for rapid deployment of multiple evluation copies '
                    'of a web application based on different git branches.'),
       long_description=README + '\n\n' +  CHANGES,
@@ -46,6 +50,8 @@ setup(name='octomotron',
       install_requires = install_requires,
       tests_require = tests_require,
       test_suite="octomotron.tests",
+      extras_require={
+          'testing': testing_extras},
       entry_points = """\
       [paste.app_factory]
       main = octomotron.serve:make_app
