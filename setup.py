@@ -11,6 +11,7 @@ except IOError:
     README = CHANGES = ''
 
 install_requires=[
+    'pam',
     'Paste',
     'PasteScript',
     'pyramid',
@@ -66,5 +67,9 @@ setup(name='octomotron',
       deploy = octomotron.deploy:config_parser
       update = octomotron.update:config_parser
       example = octomotron.example:config_parser
+
+      [octomotron.auth_policy]
+      promiscuous = octomotron.webui.auth:config_promiscuous_auth_policy
+      basic_pam = octomotron.webui.auth:config_basic_pam_auth_policy
       """
       )

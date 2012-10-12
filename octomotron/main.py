@@ -34,6 +34,3 @@ def main(argv=sys.argv, out=sys.stdout):
         args.func(args)
     except UserError, e:
         args.parser.error(str(e))
-
-
-

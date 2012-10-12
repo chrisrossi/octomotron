@@ -3,9 +3,16 @@ from paste.proxy import Proxy
 from pyramid.config import Configurator
 from pyramid.exceptions import NotFound
 from pyramid.request import Request
+from pyramid.security import Allow
+from pyramid.security import DENY_ALL
+from pyramid.security import Authenticated
 from pyramid.view import view_config
 
+from octomotron.webui.auth import config_auth_policy
 from octomotron.harness import Harness
+
+
+VIEW = 'view'
 
 
 def main(global_config, **config):
@@ -18,6 +25,7 @@ def main(global_config, **config):
     registry['harness'] = Harness(ini_path)
     registry['proxies'] = {}
     config.add_static_view('/OCTOSTATIC', 'static')
+    config_auth_policy(config)
     config.scan()
 
     return config.make_wsgi_app()
@@ -25,6 +33,7 @@ def main(global_config, **config):
 
 class Octomotron(object):
     __parent__ = __name__ = None
+    __acl__ = [(Allow, Authenticated, (VIEW,)), DENY_ALL]
 
     def __init__(self, request):
         self.harness = request.registry['harness']
@@ -54,10 +63,13 @@ class Site(object):
         self.path = path
 
     def __getitem__(self, name):
-        return type(self)(self.site, self.path + [name])
+        child = type(self)(self.site, self.path + [name])
+        child.__name__ = name
+        child.__parent__ = self
+        return child
 
 
-@view_config(context=Site)
+@view_config(context=Site, permission=VIEW)
 def proxy(context, request):
     site = context.site
     if site.state != 'running':
@@ -86,13 +98,14 @@ def proxy(context, request):
     return subrequest.get_response(proxy)
 
 
-@view_config(context=Octomotron)
+@view_config(context=Octomotron, permission=VIEW)
 def home(request):
     return request.invoke_subrequest(
         Request.blank(request.static_url('static/octomotron.html')))
 
 
-@view_config(context=AdminUI, name='get_sites', renderer='json')
+@view_config(context=AdminUI, name='get_sites', renderer='json',
+             permission=VIEW)
 def get_sites(request):
     sites = []
     for site in request.registry['harness'].sites.values():
