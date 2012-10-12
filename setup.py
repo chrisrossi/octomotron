@@ -12,8 +12,8 @@ except IOError:
 
 install_requires=[
     'Paste',
-    'PasteDeploy',
     'PasteScript',
+    'pyramid',
     'WebOb',
     ]
 
@@ -54,7 +54,7 @@ setup(name='octomotron',
           'testing': testing_extras},
       entry_points = """\
       [paste.app_factory]
-      main = octomotron.serve:make_app
+      main = octomotron.webui.application:main
 
       [console_scripts]
       octomotron = octomotron.main:main
