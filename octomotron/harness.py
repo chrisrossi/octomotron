@@ -164,7 +164,6 @@ class Site(object):
         src = os.path.join(self.build_dir, self.harness.sources_dir)
         if not os.path.exists(src):
             os.mkdir(src)
-        os.chdir(src)
         for source in self.harness.sources:
             name = source['name']
             default = 'master' if name in self.harness.always_checkout else None
@@ -176,8 +175,20 @@ class Site(object):
             if os.path.exists(source_dir):
                 continue
 
-            shell('git clone --branch %s %s' % (
-                source['branch'], source['url']))
+            # Use cache, so most objects can be copied locally in most cases
+            cachedir = os.path.join(self.harness.var, 'gitcache')
+            if not os.path.exists(cachedir):
+                os.mkdir(cachedir)
+            cacherepo = os.path.join(cachedir, name) + '.git'
+            if not os.path.exists(cacherepo):
+                os.chdir(cachedir)
+                shell('git clone --bare %s %s.git' % (source['url'], name))
+            else:
+                os.chdir(cacherepo)
+                shell('git fetch')
+
+            os.chdir(src)
+            shell('git clone --branch %s %s' % (source['branch'], cacherepo))
 
     def setup(self):
         self.build.setup()
