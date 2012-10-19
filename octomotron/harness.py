@@ -182,7 +182,7 @@ class Site(object):
             cacherepo = os.path.join(cachedir, name) + '.git'
             if not os.path.exists(cacherepo):
                 os.chdir(cachedir)
-                shell('git clone --bare %s %s.git' % (source['url'], name))
+                shell('git clone --mirror %s %s.git' % (source['url'], name))
             else:
                 os.chdir(cacherepo)
                 shell('git fetch')
