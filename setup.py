@@ -11,6 +11,7 @@ except IOError:
     README = CHANGES = ''
 
 install_requires=[
+    'cryptacular',
     'pam',
     'Paste',
     'PasteScript',
@@ -61,6 +62,7 @@ setup(name='octomotron',
       octomotron = octomotron.main:main
 
       [octomotron.script]
+      adduser = octomotron.webui.htpasswd:config_parser
       remove = octomotron.remove:config_parser
       rm = octomotron.remove:config_parser
       serve = octomotron.serve:config_parser
@@ -71,5 +73,6 @@ setup(name='octomotron',
       [octomotron.auth_policy]
       promiscuous = octomotron.webui.auth:config_promiscuous_auth_policy
       basic_pam = octomotron.webui.auth:config_basic_pam_auth_policy
+      basic_local = octomotron.webui.auth:config_basic_local_auth_policy
       """
       )

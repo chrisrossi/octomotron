@@ -7,6 +7,8 @@ from pyramid.httpexceptions import HTTPForbidden
 from pyramid.httpexceptions import HTTPUnauthorized
 from pyramid.security import forget
 
+from .htpasswd import PasswordFile
+
 
 def config_auth_policy(config):
     settings = config.registry.settings
@@ -31,10 +33,28 @@ def config_basic_pam_auth_policy(config):
     config.add_view(basic_challenge, context=HTTPForbidden)
 
 
+def config_basic_local_auth_policy(config):
+    settings = config.registry.settings
+    htpasswdfile = settings['htpasswd']
+    config.set_authorization_policy(ACLAuthorizationPolicy())
+    config.set_authentication_policy(BasicAuthAuthenticationPolicy(
+        local_authenticate(htpasswdfile), realm="Octomotron"))
+    config.add_view(basic_challenge, context=HTTPForbidden)
+
+
 def pam_authenticate(username, password, request):
     if pam.authenticate(username, password):
         return []
     return None
+
+
+def local_authenticate(htpasswdfile):
+    passwords = PasswordFile(htpasswdfile)
+    def check(username, password, request):
+        if passwords.check(username, password):
+            return []
+        return None
+    return check
 
 
 def basic_challenge(context, request):
