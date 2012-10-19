@@ -177,18 +177,25 @@ class Site(object):
 
             # Use cache, so most objects can be copied locally in most cases
             cachedir = os.path.join(self.harness.var, 'gitcache')
+            url = source['url']
+            branch = source['branch']
             if not os.path.exists(cachedir):
                 os.mkdir(cachedir)
             cacherepo = os.path.join(cachedir, name) + '.git'
             if not os.path.exists(cacherepo):
                 os.chdir(cachedir)
-                shell('git clone --mirror %s %s.git' % (source['url'], name))
+                shell('git clone --mirror %s %s.git' % (url, name))
             else:
                 os.chdir(cacherepo)
                 shell('git fetch')
 
             os.chdir(src)
-            shell('git clone --branch %s %s' % (source['branch'], cacherepo))
+            shell('git clone --branch %s %s' % (branch, cacherepo))
+            shell('git remote rm origin')
+            shell('git remote add origin %s' % url)
+            shell('git config branch.%s.remote origin' % branch)
+            shell('git config branch.%s.merge refs/heads/%s' % (
+                branch, branch))
 
     def setup(self):
         self.build.setup()
