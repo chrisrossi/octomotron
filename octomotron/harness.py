@@ -191,6 +191,7 @@ class Site(object):
 
             os.chdir(src)
             shell('git clone --branch %s %s' % (branch, cacherepo))
+            os.chdir(source_dir)
             shell('git remote rm origin')
             shell('git remote add origin %s' % url)
             shell('git config branch.%s.remote origin' % branch)
