@@ -30,6 +30,6 @@ def main(args):
     site.setup()
     site.init_data()
     site.startup()
-    site.state = site.RUNNING
+    site.run_state = site.RUNNING
     site.save()
     harness.reload_server()

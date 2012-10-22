@@ -88,6 +88,7 @@ class Site(object):
     BUILDING = 'building'
     UPDATING = 'updating'
     RUNNING = 'running'
+    STOPPED = 'stopped'
 
     @classmethod
     def load(cls, harness, path):
@@ -98,7 +99,7 @@ class Site(object):
         site.harness = harness
         site.name = serial['name']
         site.config = serial['config']
-        site.state = serial['state']
+        site.run_state = serial['run_state']
         site.build_dir = path
         site._init_common()
         return site
@@ -109,7 +110,7 @@ class Site(object):
         self._init_common()
         self.config = self._configure(other_sites)
         self.build_dir = os.path.join(self.harness.builds_dir, self.name)
-        self.state = self.BUILDING
+        self.run_state = self.BUILDING
         self.save()
 
     def _configure(self, other_sites):
@@ -131,7 +132,7 @@ class Site(object):
     def save(self):
         build_dir = self.build_dir
         serial = {'config': self.config,
-                  'state': self.state, 'name': self.name}
+                  'run_state': self.run_state, 'name': self.name}
         if not os.path.exists(build_dir):
             os.makedirs(build_dir)
         serial_file = os.path.join(build_dir, OCTOMOTRON_CFG)

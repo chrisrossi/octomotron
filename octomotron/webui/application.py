@@ -83,7 +83,7 @@ class Site(object):
 @view_config(context=Site, permission=VIEW)
 def proxy(context, request):
     site = context.site
-    if site.state != 'running':
+    if site.run_state != 'running':
         raise NotFound
 
     subrequest = request.copy()
@@ -120,12 +120,12 @@ def home(request):
 def get_sites(request):
     sites = []
     for site in request.registry['harness'].sites.values():
-        if site.state == 'running':
+        if site.run_state == 'running':
             pages = [{'href': '/%s%s' % (site.name, page['href']),
                       'title': page['title']} for page in site.pages()]
         else:
             pages = []
-        sites.append({'title': site.name, 'status': site.state,
+        sites.append({'title': site.name, 'run_state': site.run_state,
                       'pages': pages})
 
     return {'sites': sites}
