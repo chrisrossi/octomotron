@@ -63,6 +63,7 @@ setup(name='octomotron',
 
       [octomotron.script]
       adduser = octomotron.webui.htpasswd:config_parser
+      approve = octomotron.approve:config_parser
       remove = octomotron.remove:config_parser
       rm = octomotron.remove:config_parser
       serve = octomotron.serve:config_parser

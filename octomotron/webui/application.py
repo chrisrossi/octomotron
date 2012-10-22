@@ -126,6 +126,6 @@ def get_sites(request):
         else:
             pages = []
         sites.append({'title': site.name, 'run_state': site.run_state,
-                      'pages': pages})
+                      'status': site.status, 'pages': pages})
 
     return {'sites': sites}
