@@ -51,6 +51,7 @@ class Harness(object):
         env = os.path.dirname(os.path.dirname(bin))
         self.builds_dir = config.pop('builds_dir', os.path.join(env, 'builds'))
         self.var = config.pop('var', os.path.join(env, 'var'))
+        self.pids = config.pop('pids', os.path.join(self.var, 'pids'))
         self.python = config.pop('python', 'python')
         self.sources_dir = config.pop('sources_dir', 'src')
         self.build = config.pop('use')
