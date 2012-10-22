@@ -51,7 +51,6 @@ class Harness(object):
         env = os.path.dirname(os.path.dirname(bin))
         self.builds_dir = config.pop('builds_dir', os.path.join(env, 'builds'))
         self.var = config.pop('var', os.path.join(env, 'var'))
-        self.pids = config.pop('pids', os.path.join(self.var, 'pids'))
         self.python = config.pop('python', 'python')
         self.sources_dir = config.pop('sources_dir', 'src')
         self.build = config.pop('use')
@@ -66,6 +65,14 @@ class Harness(object):
                 continue
             sites[name] = Site.load(self, os.path.join(self.builds_dir, name))
 
+        self.ts = config.pop('ts', os.path.join(self.var, 'ts'))
+        if not os.path.exists(self.ts):
+            open(self.ts, 'w').write('')
+        self.timestamp = os.path.getmtime(self.ts)
+
+    def out_of_date(self):
+        return os.path.getmtime(self.ts) != self.timestamp
+
     def new_site(self, name):
         path = os.path.join(self.builds_dir, name)
         if os.path.exists(path):
@@ -73,7 +80,7 @@ class Harness(object):
         return Site(self, name, self.sites.values())
 
     def reload_server(self):
-        os.utime(self.ini_path, None)
+        os.utime(self.ts, None)
 
 
 class Site(object):

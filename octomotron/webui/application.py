@@ -15,20 +15,31 @@ from octomotron.harness import Harness
 VIEW = 'view'
 
 
-def main(global_config, **config):
-    settings = global_config.copy()
-    settings.update(config)
-    ini_path = settings.pop('ini_path')
+class Application(object):
 
-    config = Configurator(settings=settings, root_factory=Octomotron)
-    registry = config.registry
-    registry['harness'] = Harness(ini_path)
-    registry['proxies'] = {}
-    config.add_static_view('/OCTOSTATIC', 'static')
-    config_auth_policy(config)
-    config.scan()
+    def __init__(self, global_config, **config):
+        self.settings = global_config.copy()
+        self.settings.update(config)
+        self.ini_path = self.settings.pop('ini_path')
+        self.harness = Harness(self.ini_path)
+        self.pyramid_app = self.make_pyramid_app(self.harness)
 
-    return config.make_wsgi_app()
+    def make_pyramid_app(self, harness):
+        config = Configurator(settings=self.settings, root_factory=Octomotron)
+        registry = config.registry
+        registry['harness'] = harness
+        registry['proxies'] = {}
+        config.add_static_view('/OCTOSTATIC', 'static')
+        config_auth_policy(config)
+        config.scan()
+
+        return config.make_wsgi_app()
+
+    def __call__(self, environ, start_response):
+        if self.harness.out_of_date():
+            self.harness = Harness(self.ini_path)
+            self.pyramid_app = self.make_pyramid_app(self.harness)
+        return self.pyramid_app(environ, start_response)
 
 
 class Octomotron(object):

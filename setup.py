@@ -56,7 +56,7 @@ setup(name='octomotron',
           'testing': testing_extras},
       entry_points = """\
       [paste.app_factory]
-      main = octomotron.webui.application:main
+      main = octomotron.webui.application:Application
 
       [console_scripts]
       octomotron = octomotron.main:main
