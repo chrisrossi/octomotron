@@ -197,6 +197,7 @@ class Site(object):
             shell('git config branch.%s.remote origin' % branch)
             shell('git config branch.%s.merge refs/heads/%s' % (
                 branch, branch))
+            shell('git pull')
 
     def setup(self):
         self.build.setup()
