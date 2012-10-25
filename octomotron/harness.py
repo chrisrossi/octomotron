@@ -177,17 +177,18 @@ class Site(object):
 
         visit(path, build_dir)
 
-    def checkout_sources(self, branch, other_branches):
+    def checkout_sources(self, main_branch, branches):
         src = os.path.join(self.build_dir, self.harness.sources_dir)
         if not os.path.exists(src):
             os.mkdir(src)
-        for source in self.harness.sources:
+        sources = self.harness.sources
+        branches[sources[0]['name']] = main_branch
+        for source in sources:
             name = source['name']
             default = 'master' if name in self.harness.always_checkout else None
-            branch = other_branches.get(name, default)
+            branch = branches.get(name, default)
             if branch is None:
                 continue
-            source['branch'] = branch
             source_dir = os.path.join(src, name)
             if os.path.exists(source_dir):
                 continue
@@ -195,7 +196,6 @@ class Site(object):
             # Use cache, so most objects can be copied locally in most cases
             cachedir = os.path.join(self.harness.var, 'gitcache')
             url = source['url']
-            branch = source['branch']
             if not os.path.exists(cachedir):
                 os.mkdir(cachedir)
             cacherepo = os.path.join(cachedir, name) + '.git'
