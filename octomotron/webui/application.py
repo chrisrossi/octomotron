@@ -39,6 +39,16 @@ class Application(object):
         if self.harness.out_of_date():
             self.harness = Harness(self.ini_path)
             self.pyramid_app = self.make_pyramid_app(self.harness)
+        request = Request(environ)
+        path = filter(None, request.path_info.split('/'))
+        name = path[0] if path else None
+        site = self.harness.sites.get(name)
+        if site:
+            request.registry = self.pyramid_app.registry
+            site = Site(site)
+            site.path = path[1:]
+            return request.get_response(proxy(site, request))(
+                environ, start_response)
         return self.pyramid_app(environ, start_response)
 
 
@@ -80,7 +90,20 @@ class Site(object):
         return child
 
 
+def timeit(f):
+    import time
+    def wrapper(context, request):
+        start = time.time()
+        try:
+            return f(context, request)
+        finally:
+            print "Elapsed: %0.3f" % (time.time() - start)
+
+    return wrapper
+
+
 @view_config(context=Site, permission=VIEW)
+@timeit
 def proxy(context, request):
     site = context.site
     if site.run_state != 'running':
