@@ -14,6 +14,7 @@ class PasswordFile(object):
         self.filename = filename
         self.timestamp = 0
         self._passwords = {}
+        self._good_credentials = set()
 
     def _get_passwords(self):
         if os.path.exists(self.filename):
@@ -21,6 +22,8 @@ class PasswordFile(object):
             if mtime > self.timestamp:
                 self._passwords = dict([
                     line.strip().split(':') for line in open(self.filename)])
+                self._good_credentials = set()
+                self.timestamp = mtime
         return self._passwords
 
     def set_password(self, name, password):
@@ -34,8 +37,14 @@ class PasswordFile(object):
 
     def check(self, name, password):
         passwords = self._get_passwords()
+        credentials = (name, password)
+        if credentials in self._good_credentials:
+            return True
         hashed = passwords.get(name)
-        return hashed and self.bcrypt.check(hashed, password)
+        if hashed and self.bcrypt.check(hashed, password):
+            self._good_credentials.add(credentials)
+            return True
+        return False
 
 
 def config_parser(name, subparsers):
