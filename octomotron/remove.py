@@ -12,7 +12,13 @@ def main(args):
     site = harness.sites.get(args.name)
     if not site:
         args.parser.error("No such site: %s" % args.name)
-    site.shutdown()
-    site.remove_data()
-    site.delete()
-    harness.reload_server()
+    try:
+        site.shutdown()
+        site.remove_data()
+        site.delete()
+    except:
+        site.status = site.REMOVAL_FAILED
+        site.save()
+        raise
+    finally:
+        harness.reload_server()

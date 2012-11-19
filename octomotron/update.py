@@ -18,8 +18,8 @@ def main(args):
     sites = harness.sites
     for site_name in sorted(sites.keys()):
         site = sites[site_name]
-        if site.state != site.RUNNING:
-            log.warn("Skipping %s (%s)", site_name, site.state)
+        if site.run_state != site.RUNNING:
+            log.warn("Skipping %s (%s)", site_name, site.run_state)
             continue
         rebuild_required, merged = site.update_sources()
         if merged:
@@ -31,16 +31,23 @@ def main(args):
         if not rebuild_required:
             rebuild_required = site.rebuild_required()
         if rebuild_required:
-            log.info("Rebuilding %s", site_name)
-            site.state = site.UPDATING
-            site.save()
-            harness.reload_server()
-            site.pause()
-            site.refresh()
-            site.refresh_data()
-            site.resume()
-            site.state = site.RUNNING
-            site.save()
-            harness.reload_server()
+            try:
+                log.info("Rebuilding %s", site_name)
+                site.run_state = site.UPDATING
+                site.save()
+                harness.reload_server()
+                site.pause()
+                site.refresh()
+                site.refresh_data()
+                site.resume()
+                site.run_state = site.RUNNING
+                site.status = site.OK # Undoes approval, since code has changed
+            except:
+                site.run_state = site.STOPPED
+                site.status = site.UPDATE_FAILED
+                raise
+            finally:
+                site.save()
+                harness.reload_server()
         else:
             log.info("%s is up to date", site_name)

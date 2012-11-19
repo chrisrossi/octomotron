@@ -28,10 +28,14 @@ def shell(cmd, check_call=True):
     """
     Run a command as though it were being called from a shell script.
     """
+    if isinstance(cmd, basestring):
+        shell = True
+    else:
+        shell = False
     log.info(cmd)
     if check_call:
-        return subprocess.check_call(cmd, shell=True)
-    return subprocess.call(cmd, shell=True)
+        return subprocess.check_call(cmd, shell=shell)
+    return subprocess.call(cmd, shell=shell)
 
 
 def shell_capture(cmd):

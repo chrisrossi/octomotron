@@ -24,12 +24,21 @@ def main(args):
 
     harness = get_harness(args)
     site = harness.new_site(args.name)
-    harness.reload_server()
-    site.realize()
-    site.checkout_sources(branch, branches)
-    site.setup()
-    site.init_data()
-    site.startup()
-    site.state = site.RUNNING
-    site.save()
-    harness.reload_server()
+    try:
+        harness.reload_server()
+        site.realize()
+        site.checkout_sources(branch, branches)
+        site.setup()
+        site.init_data()
+        site.startup()
+        site.run_state = site.RUNNING
+        site.save()
+    except:
+        site.run_state = site.STOPPED
+        site.status = site.BUILD_FAILED
+        site.save()
+        harness.reload_server()
+        raise
+    finally:
+        harness.reload_server()
+

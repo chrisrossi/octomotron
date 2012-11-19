@@ -117,7 +117,11 @@ class BuildoutBuild(AbstractBuild):
         site = self.site
         os.chdir(site.build_dir)
         shell('virtualenv -p %s --no-site-packages .' % site.harness.python)
-        shell('bin/python bootstrap.py')
+        cmd = 'bin/easy_install zc.buildout'
+        buildout_version = site.harness.config.get('buildout_version')
+        if buildout_version:
+            cmd += '==%s' % buildout_version
+        shell(cmd)
 
         buildout_ext = pkg_resources.resource_filename(
             'octomotron', 'buildout_ext')

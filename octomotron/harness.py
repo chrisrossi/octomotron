@@ -30,6 +30,7 @@ class Harness(object):
         # Populate sources
         section = config.pop('sources', 'sources')
         self.sources = sources = []
+        self.always_checkout = config.pop('always_checkout', '').split()
         for name, source in parser.items(section):
             if name == 'here':
                 continue
@@ -41,6 +42,10 @@ class Harness(object):
             else:
                 raise UserError('Bad sources line: %s' % source)
             sources.append({'name': name, 'url': url, 'branch': branch})
+
+        first = sources[0]['name']
+        if first not in self.always_checkout:
+            self.always_checkout.append(first)
 
         bin = os.path.abspath(sys.argv[0])
         env = os.path.dirname(os.path.dirname(bin))
@@ -61,6 +66,14 @@ class Harness(object):
                 continue
             sites[name] = Site.load(self, os.path.join(self.builds_dir, name))
 
+        self.ts = config.pop('ts', os.path.join(self.var, 'ts'))
+        if not os.path.exists(self.ts):
+            open(self.ts, 'w').write('')
+        self.timestamp = os.path.getmtime(self.ts)
+
+    def out_of_date(self):
+        return os.path.getmtime(self.ts) != self.timestamp
+
     def new_site(self, name):
         path = os.path.join(self.builds_dir, name)
         if os.path.exists(path):
@@ -68,7 +81,7 @@ class Harness(object):
         return Site(self, name, self.sites.values())
 
     def reload_server(self):
-        os.utime(self.ini_path, None)
+        os.utime(self.ts, None)
 
 
 class Site(object):
@@ -76,6 +89,13 @@ class Site(object):
     BUILDING = 'building'
     UPDATING = 'updating'
     RUNNING = 'running'
+    STOPPED = 'stopped'
+
+    OK = 'ok'
+    BUILD_FAILED = 'build failed'
+    REMOVAL_FAILED = 'removal failed'
+    UPDATE_FAILED = 'update failed'
+    APPROVED = 'approved'
 
     @classmethod
     def load(cls, harness, path):
@@ -86,7 +106,8 @@ class Site(object):
         site.harness = harness
         site.name = serial['name']
         site.config = serial['config']
-        site.state = serial['state']
+        site.run_state = serial['run_state']
+        site.status = serial['status']
         site.build_dir = path
         site._init_common()
         return site
@@ -97,7 +118,8 @@ class Site(object):
         self._init_common()
         self.config = self._configure(other_sites)
         self.build_dir = os.path.join(self.harness.builds_dir, self.name)
-        self.state = self.BUILDING
+        self.run_state = self.BUILDING
+        self.status = self.OK
         self.save()
 
     def _configure(self, other_sites):
@@ -118,8 +140,8 @@ class Site(object):
 
     def save(self):
         build_dir = self.build_dir
-        serial = {'config': self.config,
-                  'state': self.state, 'name': self.name}
+        serial = {'config': self.config, 'status': self.status,
+                  'run_state': self.run_state, 'name': self.name}
         if not os.path.exists(build_dir):
             os.makedirs(build_dir)
         serial_file = os.path.join(build_dir, OCTOMOTRON_CFG)
@@ -155,28 +177,44 @@ class Site(object):
 
         visit(path, build_dir)
 
-    def checkout_sources(self, branch, other_branches):
+    def checkout_sources(self, main_branch, branches):
         src = os.path.join(self.build_dir, self.harness.sources_dir)
         if not os.path.exists(src):
             os.mkdir(src)
-        os.chdir(src)
-        sources = list(self.harness.sources)
-        sources[0]['branch'] = branch
-        checkout = [sources.pop(0)]
+        sources = self.harness.sources
+        branches[sources[0]['name']] = main_branch
         for source in sources:
             name = source['name']
-            branch = other_branches.get(name, None)
+            default = 'master' if name in self.harness.always_checkout else None
+            branch = branches.get(name, default)
             if branch is None:
                 continue
-            source['branch'] = branch
             source_dir = os.path.join(src, name)
             if os.path.exists(source_dir):
                 continue
-            checkout.append(source)
 
-        for source in checkout:
-            shell('git clone --branch %s %s' % (
-                source['branch'], source['url']))
+            # Use cache, so most objects can be copied locally in most cases
+            cachedir = os.path.join(self.harness.var, 'gitcache')
+            url = source['url']
+            if not os.path.exists(cachedir):
+                os.mkdir(cachedir)
+            cacherepo = os.path.join(cachedir, name) + '.git'
+            if not os.path.exists(cacherepo):
+                os.chdir(cachedir)
+                shell('git clone --mirror %s %s.git' % (url, name))
+            else:
+                os.chdir(cacherepo)
+                shell('git fetch')
+
+            os.chdir(src)
+            shell('git clone --branch %s %s' % (branch, cacherepo))
+            os.chdir(source_dir)
+            shell('git remote rm origin')
+            shell('git remote add origin %s' % url)
+            shell('git config branch.%s.remote origin' % branch)
+            shell('git config branch.%s.merge refs/heads/%s' % (
+                branch, branch))
+            shell('git pull')
 
     def setup(self):
         self.build.setup()
@@ -191,6 +229,7 @@ class Site(object):
         self.build.startup()
 
     def shutdown(self):
+        self.state = self.STOPPED
         self.build.shutdown()
 
     def remove_data(self):
