@@ -29,7 +29,7 @@ if sys.version < '2.7':
 testing_extras = tests_require + ['nose', 'coverage']
 
 setup(name='octomotron',
-      version='0.2dev',
+      version='0.2',
       description=('A tool for rapid deployment of multiple evluation copies '
                    'of a web application based on different git branches.'),
       long_description=README + '\n\n' +  CHANGES,
